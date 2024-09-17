@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>critterJS</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <div id="container">
+    <div id="sidebar">
+      <a href="#" onclick="game.ui.showMenu()">Menu</a>
+      <div id="health"></div>
+      <div id="stats"></div>
+      <div id="traits"></div>
+      <div id="output"></div>
+    </div>
+    <canvas id="canvasScreen" width="800" height="600"></canvas>
+    <div id="menu">
+      <button onclick="game.ui.feed()">Feed</button>
+      <button onclick="game.ui.study()">Study</button>
+      <button onclick="game.ui.play()">Play</button>
+      <br>
+      <button onclick="game.ui.trainBODY()">Train Body</button>
+      <button onclick="game.ui.trainMIND()">Train Mind</button>
+      <button onclick="game.ui.trainSOUL()">Train Soul</button>
+      <button id="exit" onclick="game.ui.showMenu()">Exit</button>
+    </div>
+    <div id="deadMenu">
+      <h1>Game Over</h1>
+      <button onclick="location.reload()">Restart</button>
+    </div>
+  </div>
+</body>
+<script src="js/gameState.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/socket.js"></script>
+
+
+</html>

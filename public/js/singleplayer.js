@@ -112,18 +112,22 @@ class Game {
         health.innerHTML = "";
         //draw number of health.heartbeats, with commas
         health.innerHTML = "Heart Beats: " + this.gotchi.health.heartbeats.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        //for each health property write the value
-        for (var prop in this.gotchi.health) {
-            health.innerHTML += "<br>" + prop + ": " + this.gotchi.health[prop];
-        }
+        //add an energy bar
+        var energy = document.createElement("progress");
+        energy.max = 254;
+        energy.value = this.gotchi.health.energy;
+        health.appendChild(energy);
+        //add a life bar
+        var life = document.createElement("progress");
+        life.max = 254;
+        life.value = this.gotchi.health.life;
+        health.appendChild(life);
     }
     statDraw() {
         //get stats div
         var stats = document.getElementById("stats");
         //set stats div to empty
         stats.innerHTML = "";
-        //draw number of health.heartbeats, with commas
-        stats.innerHTML = "Heart Beats: " + this.gotchi.health.heartbeats.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         //create a new div for each stat
         for (var stat in this.gotchi.stats) {
             var statDiv = document.createElement("div");
