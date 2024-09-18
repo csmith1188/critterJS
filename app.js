@@ -5,13 +5,13 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
 const sharedSession = require('express-socket.io-session');
-const critters = require('./game.js');
+const critters = require('./sv_game.js');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-const AUTH_URL = 'http://formbar.animetidd.is/oauth';
+const AUTH_URL = 'http://172.16.3.100:420/oauth';
 const THIS_URL = 'http://localhost:3000/login';
 
 // Set EJS as the templating engine
@@ -44,7 +44,7 @@ function isAuthenticated(req, res, next) {
 
 // Define a route for the home page
 app.get('/', (req, res) => {
-    res.render('index', { name: 'World' });
+    res.render('index', { username: req.session.user || 'World', games: games });
 });
 
 // Login Page
@@ -60,9 +60,10 @@ app.get('/login', (req, res) => {
 });
 
 // Game page
-app.get('/game', isAuthenticated, (req, res) => {
+app.get('/game/:gamecode', isAuthenticated, (req, res) => {
+    let gamecode = req.params.gamecode;
     try {
-        res.render('game.ejs', { user: req.session.user })
+        res.render('game.ejs', { username: req.session.user, gamecode: gamecode })
     }
     catch (error) {
         res.send(error.message)
@@ -88,16 +89,27 @@ io.on('connection', (socket) => {
 
     if (session && session.token) {
         console.log('Creating a game');
-        games.push(new critters.Game(socket.id, session.token));
+        games.push(new critters.Game(session.token));
     } else {
         console.log('No token found in session');
         socket.disconnect(true);
     }
 
+    // Listen for a 'joinRoom' event from the client
+    socket.on('joinGame', (roomId) => {
+        socket.join(roomId);  // Join the room with the given roomId
+        console.log(`Socket ${socket.id} (${session.token.username}) joined room ${roomId}`);
+        let game = games.find(game => game.hostUser.username === roomId);
+        game.critters.push(new critters.Critter(session.token));
+        console.log(game.critters);
+        
+        io.to(game.hostUser.username).emit('gameState', JSON.stringify(game));
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected');
         // Remove the game from the list
-        games = games.filter(game => game.socket !== socket.id);
+        games = games.filter(game => game.hostUser !== session.token);
     });
 
     // Example of handling a custom event
@@ -106,9 +118,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('userCommand', (data) => {
-        let game = games.find(game => game.socketid === socket.id);
-        let critter = game.critters.find(critter => critter.owner.username === session.user);
+        let game = games.find(game => game.hostUser === session.token);
+        let critter = game.critters.find(critter => critter.owner.username === session.token.username);
         critter.command = data.command;
+    });
+
+    socket.on('resetCritter', () => {
+        let game = games.find(game => game.hostUser === session.token);
+        let critter = game.critters.find(critter => critter.owner.username === session.token.username);
+        critter.resetCritter();
     });
 });
 
@@ -125,6 +143,6 @@ var games = [];
 setInterval(() => {
     games.forEach(game => {
         game.step();
-        io.to(game.socketid).emit('gameState', JSON.stringify(game));
+        io.to(game.hostUser.username).emit('gameState', JSON.stringify(game));
     });
 }, 500);

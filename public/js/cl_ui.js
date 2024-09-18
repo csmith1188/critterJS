@@ -25,6 +25,10 @@ class UI {
         output.innerHTML = text + "<br>";
         output.innerHTML += holdText;
     }
+
+    resetCritter() {
+        socket.emit('resetCritter');
+    }
 }
 
 var ui = new UI();

@@ -1,8 +1,73 @@
+//require sqlite3
+const sqlite3 = require('sqlite3').verbose();
+//create a new database
+let db = new sqlite3.Database('data/database.db', (err) => {
+    if (err) {
+        console.error(err.message);
+    }
+    console.log('Connected to the database.');
+});
+
+//create a player class
+class Player {
+    constructor(username) {
+        this.username = username;
+    }
+}
+
 //creat Critter class
 class Critter {
     constructor(owner) {
         this.owner = owner;
         this.command = "";
+        db.get('SELECT * FROM critters WHERE owner = ?', [owner.username], (err, critter) => {
+            if (err) {
+                console.error(err.message);
+            } else if (!critter) {
+                this.resetCritter();
+                db.run('INSERT INTO critters (owner, alive, life, heartbeats, energy, GLUT, PRIDE, SLOTH, hunger, boredom, happiness, BODY, MIND, SOUL, stage, heartrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [owner.username, this.alive, this.health.life, this.health.heartbeats, this.health.energy, this.vices.GLUT, this.vices.PRIDE, this.vices.SLOTH, this.stats.hunger, this.stats.boredom, this.stats.happiness, this.traits.BODY, this.traits.MIND, this.traits.SOUL, this.stage, this.heartrate], (err) => {
+                        if (err) {
+                            console.error(err.message);
+                        }
+                    });
+            } else {
+                this.loc = {
+                    x: 0,
+                    y: 0,
+                    xs: 1,
+                    ys: 1,
+                    w: 48,
+                    h: 48
+                }
+                this.alive = true;
+                this.health = {
+                    life: critter.life,
+                    heartbeats: critter.heartbeats,
+                    energy: critter.energy
+                }
+                this.vices = {
+                    GLUT: critter.GLUT,
+                    PRIDE: critter.PRIDE,
+                    SLOTH: critter.SLOTH
+                }
+                this.stats = {
+                    hunger: critter.hunger,
+                    boredom: critter.boredom,
+                    happiness: critter.happiness
+                };
+                this.traits = {
+                    BODY: critter.BODY,
+                    MIND: critter.MIND,
+                    SOUL: critter.SOUL
+                };
+                this.stage = critter.stage;
+                this.heartrate = critter.heartrate;
+            }
+        });
+    }
+
+    resetCritter() {
         this.loc = {
             x: 0,
             y: 0,
@@ -17,11 +82,6 @@ class Critter {
             heartbeats: 1,
             energy: 100
         }
-        this.vices = {
-            GLUT: 0,
-            PRIDE: 0,
-            SLOTH: 0
-        }
         this.stats = {
             hunger: 33,
             boredom: 33,
@@ -32,19 +92,22 @@ class Critter {
             MIND: 10,
             SOUL: 10
         };
+        this.vices = {
+            GLUT: 0,
+            PRIDE: 0,
+            SLOTH: 0
+        }
         this.stage = 0;
         this.heartrate = 20;
     }
-
 }
 
 //create a new game class
 class Game {
-    constructor(socketid, hostUser) {
+    constructor(hostUser) {
         this.hostUser = hostUser;
-        this.socketid = socketid;
-        this.guests = [];
-        this.critters = [new Critter(this.hostUser)];
+        this.players = [new Player(this.hostUser)];
+        this.critters = [];
         this.ticks = 0;
         this.debug = true;
     }
@@ -134,12 +197,19 @@ class Game {
                 critter.command = "";
                 critter.loc.x += critter.loc.xs;
                 critter.loc.y += critter.loc.ys;
-                if (critter.loc.x + critter.loc.w > 600 || critter.loc.x < 0) {
+                if (critter.loc.x + critter.loc.w > 640 || critter.loc.x < 0) {
                     critter.loc.xs = -critter.loc.xs;
                 }
-                if (critter.loc.y + critter.loc.h > 600 || critter.loc.y < 0) {
+                if (critter.loc.y + critter.loc.h > 640 || critter.loc.y < 0) {
                     critter.loc.ys = -critter.loc.ys;
                 }
+                db.run('UPDATE critters SET alive = ?, life = ?, heartbeats = ?, energy = ?, GLUT = ?, PRIDE = ?, SLOTH = ?, hunger = ?, boredom = ?, happiness = ?, BODY = ?, MIND = ?, SOUL = ?, stage = ?, heartrate = ? WHERE owner = ?',
+                    [critter.alive, critter.health.life, critter.health.heartbeats, critter.health.energy, critter.vices.GLUT, critter.vices.PRIDE, critter.vices.SLOTH, critter.stats.hunger, critter.stats.boredom, critter.stats.happiness, critter.traits.BODY, critter.traits.MIND, critter.traits.SOUL, critter.stage, critter.heartrate, critter.owner.username],
+                    (err) => {
+                        if (err) {
+                            console.error(err.message);
+                        }
+                    });
             }
         }
     }

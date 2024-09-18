@@ -9,10 +9,20 @@ const socket = io('http://localhost:3000', { // Replace with your server URL
 
 // Event listener for successful connection
 socket.on('connect', () => {
-    console.log('Connected to the server');
+    if (gamecode) {
+        socket.emit('joinGame', gamecode);
+        console.log('Connected to ' + gamecode);
+    } else {
+        socket.emit('joinGame', username);
+    }
 });
 
 // Listen for a message from the server
 socket.on('gameState', (data) => {
-    game.update(JSON.parse(data));
+    if (game) {
+        game.update(JSON.parse(data));
+    } else {
+        game = new Game(JSON.parse(data).hostUser);
+        game.update(JSON.parse(data));
+    }
 });

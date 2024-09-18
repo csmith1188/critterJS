@@ -13,9 +13,19 @@
 </head>
 
 <body>
-  Hello, <%- name %><br>
+  Hello, <%- username %><br>
   <a href="/offline">Play Offline</a><br>
-  <a href="/game">Play Online</a><br>
+  <a href="/game/<%- username %>">Create New Room</a><br>
+  <% if (JSON.stringify(games).length) { %>
+  <h2>Rooms</h2>
+  <ul>
+    <% games.forEach(game => { %>
+    <li>
+      <a href="/game/<%= game.hostUser.username %>"><%= game.hostUser.username %></a>
+    </li>
+    <% }) %>
+  </ul>
+  <% } %>
 </body>
 
 </html>

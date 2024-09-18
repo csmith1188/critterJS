@@ -14,10 +14,9 @@ class Critter {
 
 //create a new game class
 class Game {
-    constructor(socketid) {
-        // this.hostUser = hostUser;
-        this.socketid = socketid;
-        this.guests = [];
+    constructor(hostUser) {
+        this.hostUser = hostUser;
+        this.players = [];
         this.critters = [];
         this.ticks = 0;
         this.debug = true;
@@ -27,11 +26,11 @@ class Game {
         //for each critter
         for (const critter of data.critters) {
             //if the critter is not in the game, add it
-            if (!this.critters.some(c => c.id == critter.id)) {
-                this.critters.push(new Critter(critter.id));
+            if (!this.critters.some(c => c.owner.username == critter.owner.username)) {
+                this.critters.push(new Critter(critter.owner));
             }
             //if the critter is in the game, update it
-            let foundCritter = this.critters.find(c => c.id == critter.id);
+            let foundCritter = this.critters.find(c => c.owner.username == critter.owner.username);
             if (foundCritter) {
                 foundCritter.loc = critter.loc;
                 foundCritter.health = critter.health;
@@ -41,15 +40,13 @@ class Game {
                 foundCritter.stage = critter.stage;
                 foundCritter.heartrate = critter.heartrate;
             }
-
         }
         //update the ticks
         this.ticks = data.ticks;
-        //update the debug
-        this.debug = data.debug;
         this.drawAll();
         //This player's critter
-        let critter = this.critters.find(c => c.owner == this.hostUser);
+        let critter = this.critters.find(c => c.owner.username == username);
+        
         if (critter.alive && critter.health.life <= 0) {
             critter.alive = false;
         }
@@ -59,6 +56,10 @@ class Game {
             //show the dead menu
             var deadMenu = document.getElementById("deadMenu");
             deadMenu.style.display = "block";
+        } else {
+            //hide the dead menu
+            var deadMenu = document.getElementById("deadMenu");
+            deadMenu.style.display = "none";
         }
     }
 
@@ -72,7 +73,7 @@ class Game {
 
     healthDraw() {
         //get the critter from the list who's owner's name matches this token's name
-        let critter = this.critters.find(c => c.owner == this.hostUser);
+        let critter = this.critters.find(c => c.owner.username == username);
         //get health div
         var health = document.getElementById("health");
         //set health div to empty
@@ -95,7 +96,7 @@ class Game {
 
     statDraw() {
         //get the critter from the list who's owner's name matches this token's name
-        let critter = this.critters.find(c => c.owner == this.hostUser);
+        let critter = this.critters.find(c => c.owner.username == username);
         //get stats div
         var stats = document.getElementById("stats");
         //set stats div to empty
@@ -111,7 +112,7 @@ class Game {
             for (let statVal = 0; statVal < Math.floor((critter.stats[stat] + 32) / 64); statVal++) {
                 //add a heart image to the div
                 var heart = document.createElement("img");
-                heart.src = "img/h_full.png";
+                heart.src = "../img/h_full.png";
                 heart.width = 36;
                 heart.height = 24;
                 statDiv.appendChild(heart);
@@ -120,7 +121,7 @@ class Game {
             if (critter.stats[stat] % 64 > 0 && critter.stats[stat] % 64 < 32) {
                 //add a heart image to the div
                 var heart = document.createElement("img");
-                heart.src = "img/h_half.png";
+                heart.src = "../img/h_half.png";
                 heart.width = 36;
                 heart.height = 24;
                 statDiv.appendChild(heart);
@@ -129,7 +130,7 @@ class Game {
             for (let statVal = 0; statVal <= 3 - critter.stats[stat] / 64; statVal++) {
                 //add a heart image to the div
                 var heart = document.createElement("img");
-                heart.src = "img/h_empty.png";
+                heart.src = "../img/h_empty.png";
                 heart.width = 36;
                 heart.height = 24;
                 statDiv.appendChild(heart);
@@ -142,7 +143,7 @@ class Game {
 
     traitDraw() {
         //get the critter from the list who's owner's name matches this token's name
-        let critter = this.critters.find(c => c.owner == this.hostUser);
+        let critter = this.critters.find(c => c.owner.username == username);
         //get traits div
         var traits = document.getElementById("traits");
         //set traits div to empty
@@ -163,7 +164,7 @@ class Game {
 
     viceDraw() {
         //get the critter from the list who's owner's name matches this token's name
-        let critter = this.critters.find(c => c.owner == this.hostUser);
+        let critter = this.critters.find(c => c.owner.username == username);
         //get vices div
         var vices = document.getElementById("vices");
         //set vices div to empty
@@ -204,5 +205,5 @@ var ctx = canvas.getContext("2d");
 var canvasWidth = canvas.width;
 var canvasHeight = canvas.height;
 
-//create a new game object
-var game = new Game();
+//blank game variable
+var game = "";
