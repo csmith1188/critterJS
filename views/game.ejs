@@ -12,22 +12,20 @@
 <body>
   <div id="container">
     <div id="sidebar">
-      <a href="#" onclick="game.ui.showMenu()">Menu</a>
+      <a href="#" onclick="ui.showMenu()">Menu</a>
       <div id="health"></div>
       <div id="stats"></div>
       <div id="traits"></div>
+      <div id="vices"></div>
       <div id="output"></div>
     </div>
-    <canvas id="canvasScreen" width="800" height="600"></canvas>
+    <canvas id="canvasScreen" width="600" height="600"></canvas>
     <div id="menu">
-      <button onclick="game.ui.feed()">Feed</button>
-      <button onclick="game.ui.study()">Study</button>
-      <button onclick="game.ui.play()">Play</button>
+      <button onclick="ui.command('feed')">Feed</button>
+      <button onclick="ui.command('study')">Study</button>
+      <button onclick="ui.command('play')">Play</button>
       <br>
-      <button onclick="game.ui.trainBODY()">Train Body</button>
-      <button onclick="game.ui.trainMIND()">Train Mind</button>
-      <button onclick="game.ui.trainSOUL()">Train Soul</button>
-      <button id="exit" onclick="game.ui.showMenu()">Exit</button>
+      <button id="exit" onclick="ui.showMenu()">Exit</button>
     </div>
     <div id="deadMenu">
       <h1>Game Over</h1>

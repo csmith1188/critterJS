@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-const AUTH_URL = 'http://172.16.3.100:420/oauth';
+const AUTH_URL = 'http://formbar.animetidd.is/oauth';
 const THIS_URL = 'http://localhost:3000/login';
 
 // Set EJS as the templating engine
@@ -104,6 +104,12 @@ io.on('connection', (socket) => {
     socket.on('chat', (msg) => {
         io.to(socket).emit('chat', msg);
     });
+
+    socket.on('userCommand', (data) => {
+        let game = games.find(game => game.socketid === socket.id);
+        let critter = game.critters.find(critter => critter.owner.username === session.user);
+        critter.command = data.command;
+    });
 });
 
 // Start the server
@@ -112,15 +118,13 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-// GAMES
-
-games = [];
 
 // Run games
+var games = [];
 // for each game in the games array, run the step function
 setInterval(() => {
     games.forEach(game => {
         game.step();
         io.to(game.socketid).emit('gameState', JSON.stringify(game));
     });
-}, 1000);
+}, 500);

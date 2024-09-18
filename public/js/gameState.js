@@ -3,61 +3,12 @@ class Critter {
     constructor(owner) {
         this.owner = owner;
         this.alive = true;
-        this.loc = {
-            x: 0,
-            y: 0,
-            xs: 0,
-            ys: 0,
-            w: 48,
-            h: 48
-        }
-        this.health = {
-            life: 254,
-            heartbeats: 1,
-            energy: 100
-        }
-        this.stats = {
-            hunger: 33,
-            boredom: 33,
-            happiness: 33
-        };
-        this.traits = {
-            BODY: 10,
-            MIND: 10,
-            SOUL: 10
-        };
-        this.stage = 0;
-        this.heartrate = 600;
-    }
-
-    move() {
-        if (this.alive) {
-            this.x += this.xSpeed;
-            this.y += this.ySpeed;
-            if (this.x + this.width > canvasWidth || this.x < 0) {
-                this.xSpeed = -this.xSpeed;
-            }
-            if (this.y + this.height > canvasHeight || this.y < 0) {
-                this.ySpeed = -this.ySpeed;
-            }
-        }
     }
 
     draw() {
         //fillstyle is the BODY MIND SOUL as RGB
         ctx.fillStyle = "rgb(" + this.traits.BODY + "," + this.traits.MIND + "," + this.traits.SOUL + ")";
         ctx.fillRect(this.loc.x, this.loc.y, this.loc.w, this.loc.h);
-        if (this.alive && this.health.life <= 0) {
-            this.alive = false;
-            if (game.debug) game.ui.output("Critter is Dead");
-        }
-        if (!this.alive) {
-            //hide the menu if the critter is dead
-            game.ui.menu.style.display = "none";
-            //show the dead menu
-            var deadMenu = document.getElementById("deadMenu");
-            deadMenu.style.display = "block";
-        }
     }
 }
 
@@ -86,6 +37,7 @@ class Game {
                 foundCritter.health = critter.health;
                 foundCritter.stats = critter.stats;
                 foundCritter.traits = critter.traits;
+                foundCritter.vices = critter.vices;
                 foundCritter.stage = critter.stage;
                 foundCritter.heartrate = critter.heartrate;
             }
@@ -96,12 +48,25 @@ class Game {
         //update the debug
         this.debug = data.debug;
         this.drawAll();
+        //This player's critter
+        let critter = this.critters.find(c => c.owner == this.hostUser);
+        if (critter.alive && critter.health.life <= 0) {
+            critter.alive = false;
+        }
+        if (!critter.alive) {
+            //hide the menu if the critter is dead
+            document.getElementById('menu').style.display = "none";
+            //show the dead menu
+            var deadMenu = document.getElementById("deadMenu");
+            deadMenu.style.display = "block";
+        }
     }
 
     drawAll() {
         this.healthDraw();
         this.statDraw();
         this.traitDraw();
+        this.viceDraw();
         this.draw();
     }
 
@@ -115,11 +80,13 @@ class Game {
         //draw number of health.heartbeats, with commas
         health.innerHTML = "Heart Beats: " + critter.health.heartbeats.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         //add an energy bar
+        health.innerHTML += "<br>Energy<br>";
         var energy = document.createElement("progress");
         energy.max = 254;
         energy.value = critter.health.energy;
         health.appendChild(energy);
         //add a life bar
+        health.innerHTML += "<br>Life<br>";
         var life = document.createElement("progress");
         life.max = 254;
         life.value = critter.health.life;
@@ -137,7 +104,9 @@ class Game {
         for (var stat in critter.stats) {
             var statDiv = document.createElement("div");
             // Stat name with capital first letter and number out of 254
-            statDiv.innerHTML = stat.charAt(0).toUpperCase() + stat.slice(1) + ": " + critter.stats[stat] + "/254<br>";
+            // statDiv.innerHTML = stat.charAt(0).toUpperCase() + stat.slice(1) + ": " + critter.stats[stat] + "/254<br>";
+            // Stat name
+            statDiv.innerHTML = stat.charAt(0).toUpperCase() + stat.slice(1) + ": <br>";
             //draw full hearts
             for (let statVal = 0; statVal < Math.floor((critter.stats[stat] + 32) / 64); statVal++) {
                 //add a heart image to the div
@@ -181,7 +150,7 @@ class Game {
         //create a new div for each trait
         for (var trait in critter.traits) {
             var traitDiv = document.createElement("div");
-            traitDiv.innerHTML = trait + ": " + critter.traits[trait] + "<br>";
+            traitDiv.innerHTML = trait;
             //add a progress bar to the div
             var bar = document.createElement("progress");
             bar.max = 254;
@@ -189,6 +158,27 @@ class Game {
             traitDiv.appendChild(bar);
             //add the div to the traits
             traits.appendChild(traitDiv);
+        }
+    }
+
+    viceDraw() {
+        //get the critter from the list who's owner's name matches this token's name
+        let critter = this.critters.find(c => c.owner == this.hostUser);
+        //get vices div
+        var vices = document.getElementById("vices");
+        //set vices div to empty
+        vices.innerHTML = "";
+        //create a new div for each vice
+        for (var vice in critter.vices) {
+            var viceDiv = document.createElement("div");
+            viceDiv.innerHTML = vice;
+            //add a progress bar to the div
+            var bar = document.createElement("progress");
+            bar.max = 254;
+            bar.value = critter.vices[vice];
+            viceDiv.appendChild(bar);
+            //add the div to the vices
+            vices.appendChild(viceDiv);
         }
     }
 

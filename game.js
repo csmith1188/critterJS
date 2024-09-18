@@ -2,11 +2,12 @@
 class Critter {
     constructor(owner) {
         this.owner = owner;
+        this.command = "";
         this.loc = {
             x: 0,
             y: 0,
-            xs: 0,
-            ys: 0,
+            xs: 1,
+            ys: 1,
             w: 48,
             h: 48
         }
@@ -15,6 +16,11 @@ class Critter {
             life: 254,
             heartbeats: 1,
             energy: 100
+        }
+        this.vices = {
+            GLUT: 0,
+            PRIDE: 0,
+            SLOTH: 0
         }
         this.stats = {
             hunger: 33,
@@ -27,7 +33,7 @@ class Critter {
             SOUL: 10
         };
         this.stage = 0;
-        this.heartrate = 600;
+        this.heartrate = 20;
     }
 
 }
@@ -48,29 +54,30 @@ class Game {
         // for each critter
         for (const critter of this.critters) {
             if (critter.alive) {
-                critter.health.heartbeats += 1;
+                critter.health.heartbeats += this.ticks % 2;
                 // decrease hunger if roll against body
-                if (this.roll(critter.traits.BODY)) {
-                    critter.stats.hunger -= 1;
-                }
+                if (!this.roll(critter.traits.BODY)) critter.stats.hunger -= 1;
+                if (this.roll(critter.vices.GLUT)) critter.stats.hunger -= 1;
                 // decrease boredom if roll against mind
-                if (this.roll(critter.traits.MIND)) {
-                    critter.stats.boredom -= 1;
-                }
+                if (!this.roll(critter.traits.MIND)) critter.stats.boredom -= 1;
+                if (this.roll(critter.vices.PRIDE)) critter.stats.boredom -= 1;
                 // decrease happiness if roll against soul
-                if (this.roll(critter.traits.SOUL)) {
-                    critter.stats.happiness -= 1;
-                }
+                if (!this.roll(critter.traits.SOUL)) critter.stats.happiness -= 1;
+                if (this.roll(critter.vices.SLOTH)) critter.stats.happiness -= 1;
                 //if any stat is less than 0, make it 0
                 for (var stat in critter.stats) {
                     if (critter.stats[stat] < 0) {
                         critter.stats[stat] = 0;
                     }
                 }
+                //energy
+                if (this.roll(critter.traits.BODY)) critter.health.energy += 1;
+                critter.health.energy += 1;
+                if (critter.health.energy > 254) critter.health.energy = 254;
                 if (this.ticks % critter.heartrate == 0) {
                     //for each stat, roll against it and decrease life if fail
                     for (var stat in critter.stats) {
-                        if (this.roll(critter.stats[stat])) {
+                        if (!this.roll(critter.stats[stat])) {
                             critter.health.life -= 1;
                         }
                     }
@@ -78,71 +85,69 @@ class Game {
                 if (critter.alive && critter.health.life <= 0) {
                     critter.alive = false;
                 }
+                switch (critter.command) {
+                    case 'feed':
+                        if (critter.health.energy > 10) {
+                            critter.health.energy -= 10;
+                            if (!this.roll(critter.traits.BODY)) {
+                                critter.traits.BODY += 1;
+                            }
+                            if (critter.stats.hunger > 192) {
+                                critter.vices.GLUT += 1;
+                                if (critter.vices.GLUT > 254) critter.vices.GLUT = 254;
+                            }
+                            critter.stats.hunger += 32;
+                            if (critter.stats.hunger > 254) critter.stats.hunger = 254;
+                        }
+                        break;
+                    case 'study':
+                        if (critter.health.energy > 10) {
+                            critter.health.energy -= 10;
+                            if (!this.roll(critter.traits.MIND)) {
+                                critter.traits.MIND += 1;
+                            }
+                            if (critter.stats.boredom > 192) {
+                                critter.vices.PRIDE += 1;
+                                if (critter.vices.PRIDE > 254) critter.vices.PRIDE = 254;
+                            }
+                            critter.stats.boredom += 32;
+                            if (critter.stats.boredom > 254) critter.stats.boredom = 254;
+                        }
+                        break;
+                    case 'play':
+                        if (critter.health.energy > 10) {
+                            critter.health.energy -= 10;
+                            if (!this.roll(critter.traits.SOUL)) {
+                                critter.traits.SOUL += 1;
+                            }
+                            if (critter.stats.happiness > 192) {
+                                critter.vices.SLOTH += 1;
+                                if (critter.vices.SLOTH > 254) critter.vices.SLOTH = 254;
+                            }
+                            critter.stats.happiness += 32;
+                            if (critter.stats.happiness > 254) critter.stats.happiness = 254;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                critter.command = "";
+                critter.loc.x += critter.loc.xs;
+                critter.loc.y += critter.loc.ys;
+                if (critter.loc.x + critter.loc.w > 600 || critter.loc.x < 0) {
+                    critter.loc.xs = -critter.loc.xs;
+                }
+                if (critter.loc.y + critter.loc.h > 600 || critter.loc.y < 0) {
+                    critter.loc.ys = -critter.loc.ys;
+                }
             }
         }
     }
 
     roll(against) {
-        return Math.round(Math.random() * 254) > against;
+        return Math.round(Math.random() * 254) < against;
     }
 }
-
-// create a UI class
-// class UI {
-//     constructor() {
-//         this.menu = document.getElementById("menu");
-//         this.menu.style.display = "none";
-//         this.menuShown = false;
-//     }
-//     showMenu() {
-//         if (this.menuShown) {
-//             this.menu.style.display = "none";
-//             this.menuShown = false;
-//             return;
-//         } else {
-//             this.menu.style.display = "block";
-//             this.menuShown = true;
-//         }
-//     }
-//     feed() {
-//         game.critter.stats.hunger += 32;
-//         if (game.critter.stats.hunger > 254) {
-//             game.critter.stats.hunger = 254;
-//         }
-//     }
-//     play() {
-//         game.critter.stats.happiness += 32;
-//         if (game.critter.stats.happiness > 254) {
-//             game.critter.stats.happiness = 254;
-//         }
-//     }
-//     study() {
-//         game.critter.stats.boredom += 32;
-//         if (game.critter.stats.boredom > 254) {
-//             game.critter.stats.boredom = 254;
-//         }
-//     }
-
-//     trainBODY() {
-//         game.critter.traits.BODY += 32;
-//         if (game.critter.traits.BODY > 254) {
-//             game.critter.traits.BODY = 254;
-//         }
-//     }
-//     trainMIND() {
-//         game.critter.traits.MIND += 32;
-//         if (game.critter.traits.MIND > 254) {
-//             game.critter.traits.MIND = 254;
-//         }
-//     }
-//     trainSOUL() {
-//         game.critter.traits.SOUL += 32;
-//         if (game.critter.traits.SOUL > 254) {
-//             game.critter.traits.SOUL = 254;
-//         }
-//     }
-
-// }
 
 module.exports = {
     Critter,
