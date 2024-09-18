@@ -5,6 +5,12 @@ body {
     padding: 0;
 }
 
+.critter {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
 #container {
     margin: 0 auto;
     padding: 0;

@@ -87,29 +87,41 @@ io.on('connection', (socket) => {
     // Access the session within the socket
     const session = socket.handshake.session;
 
-    if (session && session.token) {
-        console.log('Creating a game');
-        games.push(new critters.Game(session.token));
-    } else {
+    if (!session) {
         console.log('No token found in session');
         socket.disconnect(true);
     }
 
     // Listen for a 'joinRoom' event from the client
     socket.on('joinGame', (roomId) => {
-        socket.join(roomId);  // Join the room with the given roomId
-        console.log(`Socket ${socket.id} (${session.token.username}) joined room ${roomId}`);
-        let game = games.find(game => game.hostUser.username === roomId);
-        game.critters.push(new critters.Critter(session.token));
-        console.log(game.critters);
-        
-        io.to(game.hostUser.username).emit('gameState', JSON.stringify(game));
+        if (session.token) {   
+            socket.join(roomId);  // Join the room with the given roomId
+            // If no game exists with the given roomId, create a new game
+            if (!games.some(game => game.hostUser.username === roomId)) {
+                games.push(new critters.Game(session.token));
+            }
+            console.log(`Socket ${socket.id} (${session.token.username}) joined room ${roomId}`);
+            let game = games.find(game => game.hostUser.username === roomId);
+            game.critters.push(new critters.Critter(session.token));
+            io.to(game.hostUser.username).emit('gameState', JSON.stringify(game));
+        }
     });
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
-        // Remove the game from the list
-        games = games.filter(game => game.hostUser !== session.token);
+        // Find the game that the user was hosting
+        let game = games.find(game => game.hostUser.username === session.token.username);
+        if (game) {
+            // Remove the game from the list
+            games.splice(games.indexOf(game), 1);
+        } else {
+            // Find game user was playing in
+            game = games.find(game => game.critters.some(critter => critter.owner.username === session.token.username));
+            if (game) {
+                // Remove the critter from the game
+                game.critters = game.critters.filter(critter => critter.owner.username !== session.token.username);
+            }
+        }
     });
 
     // Example of handling a custom event
@@ -123,8 +135,8 @@ io.on('connection', (socket) => {
         critter.command = data.command;
     });
 
-    socket.on('resetCritter', () => {
-        let game = games.find(game => game.hostUser === session.token);
+    socket.on('resetCritter', (data) => {
+        let game = games.find(game => game.hostUser.username === data.hostUser.username);
         let critter = game.critters.find(critter => critter.owner.username === session.token.username);
         critter.resetCritter();
     });

@@ -3,12 +3,21 @@ class Critter {
     constructor(owner) {
         this.owner = owner;
         this.alive = true;
+        this.breed = 'egg';
+        this.aniFrame = 0;
+        this.animation = 'idle';
     }
 
     draw() {
+        if (!this.image) {
+            this.image = new Image();
+            this.image.classList.add("critter");
+        }
+        this.image.src = "../img/critters/" + animations[this.breed][this.animation][this.aniFrame];
         //fillstyle is the BODY MIND SOUL as RGB
-        ctx.fillStyle = "rgb(" + this.traits.BODY + "," + this.traits.MIND + "," + this.traits.SOUL + ")";
-        ctx.fillRect(this.loc.x, this.loc.y, this.loc.w, this.loc.h);
+        // ctx.fillStyle = "rgb(" + this.traits.BODY + "," + this.traits.MIND + "," + this.traits.SOUL + ")";
+        // ctx.fillRect(this.loc.x, this.loc.y, this.loc.w, this.loc.h);
+        ctx.drawImage(this.image, this.loc.x, this.loc.y, this.loc.w, this.loc.h);
     }
 }
 
@@ -37,16 +46,18 @@ class Game {
                 foundCritter.stats = critter.stats;
                 foundCritter.traits = critter.traits;
                 foundCritter.vices = critter.vices;
-                foundCritter.stage = critter.stage;
+                foundCritter.breed = critter.breed;
                 foundCritter.heartrate = critter.heartrate;
             }
         }
+        //if a critter was in the game but is not in the data, remove it
+        this.critters = this.critters.filter(c => data.critters.some(d => d.owner.username == c.owner.username));
         //update the ticks
         this.ticks = data.ticks;
         this.drawAll();
         //This player's critter
         let critter = this.critters.find(c => c.owner.username == username);
-        
+
         if (critter.alive && critter.health.life <= 0) {
             critter.alive = false;
         }
@@ -64,34 +75,38 @@ class Game {
     }
 
     drawAll() {
-        this.healthDraw();
-        this.statDraw();
-        this.traitDraw();
-        this.viceDraw();
-        this.draw();
+        if (game) {
+            this.healthDraw();
+            this.statDraw();
+            this.traitDraw();
+            this.viceDraw();
+            this.draw();
+        }
     }
 
     healthDraw() {
         //get the critter from the list who's owner's name matches this token's name
         let critter = this.critters.find(c => c.owner.username == username);
-        //get health div
-        var health = document.getElementById("health");
-        //set health div to empty
-        health.innerHTML = "";
-        //draw number of health.heartbeats, with commas
-        health.innerHTML = "Heart Beats: " + critter.health.heartbeats.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        //add an energy bar
-        health.innerHTML += "<br>Energy<br>";
-        var energy = document.createElement("progress");
-        energy.max = 254;
-        energy.value = critter.health.energy;
-        health.appendChild(energy);
-        //add a life bar
-        health.innerHTML += "<br>Life<br>";
-        var life = document.createElement("progress");
-        life.max = 254;
-        life.value = critter.health.life;
-        health.appendChild(life);
+        if (critter) {
+            //get health div
+            var health = document.getElementById("health");
+            //set health div to empty
+            health.innerHTML = "";
+            //draw number of health.heartbeats, with commas
+            health.innerHTML = "Heart Beats: " + critter.health.heartbeats.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            //add an energy bar
+            health.innerHTML += "<br>Energy<br>";
+            var energy = document.createElement("progress");
+            energy.max = 254;
+            energy.value = critter.health.energy;
+            health.appendChild(energy);
+            //add a life bar
+            health.innerHTML += "<br>Life<br>";
+            var life = document.createElement("progress");
+            life.max = 254;
+            life.value = critter.health.life;
+            health.appendChild(life);
+        }
     }
 
     statDraw() {
@@ -188,6 +203,7 @@ class Game {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         //draw each critter
         for (let critter of this.critters) {
+            critter.aniFrame = critter.health.heartbeats % 2;
             critter.draw();
         }
     }

@@ -27,7 +27,7 @@ class UI {
     }
 
     resetCritter() {
-        socket.emit('resetCritter');
+        socket.emit('resetCritter', { hostUser: game.hostUser });
     }
 }
 
